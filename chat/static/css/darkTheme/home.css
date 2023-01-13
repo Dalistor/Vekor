@@ -1,0 +1,33 @@
+body {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+header {
+    background-color: #010248;
+}
+
+.menu-perfil {
+    color: white;
+}
+
+.menu-a {
+    color: white;
+}
+
+.menu-middle, .menu-down {
+    color: white;
+    border-color: white;
+}
+
+.chats {
+    border-color: white;
+}
+
+.acount-content, .group-content {
+    border-color: white;
+}
+
+.acount-link, .group-link {
+    color: white;
+}

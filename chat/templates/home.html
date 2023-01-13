@@ -1,0 +1,329 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<title>Vekor - home</title>
+	<link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
+	{% if acount.acount_darkTheme %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/darkTheme/home.css' %}">
+	{% endif %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/itens/menu.css' %}">
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+	<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+	<script type="text/javascript">
+		let homeInterval
+		let groupInterval
+
+		let past_value
+		function screenControl(screen) {
+			switch (screen) {
+				case 'home':
+					if (past_value != 'home') {
+						clearInterval(groupInterval)
+
+						$('#display').empty()
+						home()
+
+						homeInterval = setInterval(home, 1000)
+
+						past_value = 'home'
+					}
+
+					break
+
+				case 'search':
+					if (past_value != 'search') {
+						clearInterval(homeInterval)
+						clearInterval(groupInterval)
+						$('#display').empty()
+
+
+						$('#chatSection').css('color', '#f0f8ff')
+						$('#groupSection').css('color', '')
+						past_value = 'search'
+					}
+
+					break
+
+				case 'group':
+					if (past_value != 'group') {
+						clearInterval(homeInterval)
+
+						$('#display').empty()
+						group()
+
+						groupInterval = setInterval(group, 1000)
+
+						past_value = 'group'
+					}
+			}
+		}
+
+		$(document).ready(()=> {
+			const chatSection = $('#chatSection')
+			const groupSection = $('#groupSection')
+
+			const display = $('#display')
+			const initial = $('#initial_display')
+			const groups = $('#groups')
+
+			chatSection.click(()=> {
+				chatSection.css('color', 'ivory')
+				groupSection.css('color', '')
+
+				screenControl('home')
+			})
+
+			groupSection.click(()=> {
+				groupSection.css('color', 'ivory')
+				chatSection.css('color', '')
+
+				$('#search').val('')
+
+				screenControl('group')
+			})
+		})
+	</script>
+</head>
+<body>
+	{% csrf_token %}
+	
+	<script>
+		window.OneSignal = window.OneSignal || [];
+		OneSignal.push(function() {
+		    OneSignal.init({
+		    	appId: "c240b0ed-a771-4337-aded-bccbbdc57886",
+		    });
+		    OneSignal.getUserId(function(userId) {
+		    	$.ajax({
+			        type:'POST',
+			        url:'/saveUserSignal/{{acount.id}}',
+			        data: {
+			        	signal: userId,
+			        	csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()
+			        }
+			    })
+		  	});
+		})
+	</script>
+
+	<header>
+		<div class="menu-top">
+			<a class="menu-perfil" href="/perfil/{{acount.acount_unicName}}">
+			</a>
+			<script type="text/javascript">
+				function getPerfil() {
+					$.ajax({
+				        type:'GET',
+				        url:'?perfil={{acount.id}}',
+				        success: (response)=> {
+				        	$('.menu-perfil').empty()
+			        		var temp = '<div class="menu-perfil-div-photo"><img src="/media/' + response.perfil[0].acount_photo + '"> </div><p class="header-perfil-name">' + response.perfil[0].acount_unicName + ' (' + response.perfil[0].acount_name + ')</p>'
+
+			        		$('.menu-perfil').append(temp)
+
+				        },
+				        error: ()=> {
+				        	console.log('an error ocurred')
+				        }
+				    })
+				}
+
+				getPerfil()
+
+				setInterval(getPerfil, 2000)
+				
+			</script>
+
+			<input type="checkbox" id="check" class="menu-input">
+			<script type="text/javascript">
+				$('#check').on('change', ()=> {
+					if($('#check').is(':checked')) {
+						$(document).on('click', (e)=> {
+							if(e.target.classList[0] != 'menu-img') {
+								$('#check').prop('checked', false)
+							}
+							$(document).off('click')
+						})
+					}
+				})
+			</script>
+			{% if acount.acount_darkTheme %}
+			<label for="check" class="menu-label"><img src="{% static 'imgs/darkMenu.png' %}" class="menu-img"></label>
+			{% else %}
+			<label for="check" class="menu-label"><img src="{% static 'imgs/menu.png' %}" class="menu-img"></label>
+			{% endif %}
+
+			<nav class="menu-nav">
+				<ul class="menu-ul">
+					{% if request.user.is_staff %}
+					<li><a href="/admin/" class="menu-a">Administrar</a></li>
+					{% endif %}
+					<li><a href="/perfil/{{request.user}}" class="menu-a">Perfil</a></li>
+					<li><a href="/newGroup/" class="menu-a">Novo grupo</a></li>
+					<li><a href="/logout/" class="menu-a">Sair</a></li>
+				</ul>
+			</nav>
+		</div>
+
+		<div class="menu-middle">
+			<div id="chatSection" class="menu-middle-sections" style="color: #f0f8ff">
+				Conversas
+			</div>
+			<div id="groupSection" class="menu-middle-sections">
+				Grupos
+			</div>
+		</div>
+
+		<div class="menu-down">
+			<input type="text" id="search" maxlength="20" placeholder="Buscar pessoas">
+		</div>
+	</header>
+
+	<main class="container">
+		<div class="chats">
+
+			<div id="display"></div>
+
+			<script type="text/javascript">
+				//envio de formulário GET e atualização
+				$('#search').keyup(()=>{
+					if ($('#search').val() != '') {
+						screenControl('search')
+					} else {
+						screenControl('home')
+					}
+
+					$.ajax({
+				        type:'GET',
+				        url:'?search=' + $('#search').val(),
+				        success: (response)=> {
+				        	$('#display').empty()
+				        	for(var key in response.search) {
+
+				        		var temp = '<div class="acount-content"><div class="acount-top"><a href="/perfil/' + response.search[key].acount_unicName + '"><div class="acount-photo"><img src="/media/' + response.search[key].acount_photo + '"></div></a></div><a class="acount-button acount-link" href="/chat/{{acount.id}}/' + response.search[key].id + '"><p class="acount-name">' + response.search[key].acount_unicName + ' (' + response.search[key].acount_name + ')</p><p class="acount-description">' + response.search[key].acount_description + '</p></a></div>'
+
+				        		$('#display').append(temp)
+				        	}
+				        },
+				        error: ()=> {
+				        	console.log('an error ocurred')
+				        }
+				    })
+				})
+			</script>
+
+			<script type="text/javascript">
+				//mudança no display dos chats
+
+				screenControl('home')
+
+				function home() {
+
+					$.ajax({
+						type:'GET',
+						url:'?home={{acount.id}}',
+						success: (response)=> {
+							if ($('#search').val() != '') {
+								return
+							}
+
+							//atualizar chat automáticamente
+							const names = []
+							const unicNames = []
+							const descriptions = []
+							const photos = []
+							const ids = []
+							const views = []
+
+							$('#display').empty()
+							const chats = response.data.chats
+
+							for (var item = 0; item < chats.length; item++) {
+								switch(item) {
+									//nomes
+									case 0:
+										pushItem(chats[item], names)
+										break
+
+									//nomes unicos
+									case 1:
+										pushItem(chats[item], unicNames)
+										break
+
+									//descrição
+									case 2:
+										pushItem(chats[item], descriptions)
+										break
+
+									//foto
+									case 3:
+										pushItem(chats[item], photos)
+										break
+
+									//id
+									case 4:
+										pushItem(chats[item], ids)
+										break
+
+									//view
+									case 5:
+										pushItem(chats[item], views)
+										break
+								}
+							}
+
+							for (var i = 0; i < names.length; i++) {
+								var temp
+
+								if (views[i]) {
+									temp = '<div class="acount-content"><div class="acount-top"><a href="/perfil/' + unicNames[i] + '"><div class="acount-photo"><img src="/media/' + photos[i] +'"></div></a></div><a class="acount-button acount-link" href="/chat/{{acount.id}}/' + ids[i] + '"><p class="acount-name">' + unicNames[i] + ' (' + names[i] + ')</p><p class="acount-description">' + descriptions[i] + '</p></a></div>'
+								} else {
+									temp = '<div class="acount-content"><div class="acount-top"><a href="/perfil/' + unicNames[i] + '"><div class="acount-photo"><img src="/media/' + photos[i] +'"></div></a></div><a class="acount-button acount-link" href="/chat/{{acount.id}}/' + ids[i] + '"><p class="acount-name">' + unicNames[i] + ' (' + names[i] + ') <div class="newMessage"></div></p><p class="acount-description">' + descriptions[i] + '</p></a></div>'
+								}
+
+								$('#display').append(temp)
+							}
+						}
+					})
+				}
+
+				function pushItem(chat, array) {
+					for (var i = 0; i < chat.length; i++) {
+						array.push(chat[i])
+					}
+				}
+			</script>
+
+			<script type="text/javascript">
+
+				function group() {
+					$.ajax({
+						type:'GET',
+						url:'?group={{acount.id}}',
+						success: (response)=> {
+							$('#display').empty()
+
+							for (key in response.data.group) {
+
+								if (response.data.groupView[key]) {
+									var temp = '<div class="group-content"><a class="group-top" href="/groupMenu/' + response.data.group[key].id + '"><div class="group-photo"><img src="/media/' + response.data.group[key].group_photo +'"></div></a><a class="group-button group-link" href="/group/' + response.data.group[key].id + '"><p class="group-name">' + response.data.group[key].group_name + '</p></a></div>'
+								} else {
+									var temp = '<div class="group-content"><a class="group-top" href="/groupMenu/' + response.data.group[key].id + '"><div class="group-photo"><img src="/media/' + response.data.group[key].group_photo +'"></div></a><a class="group-button group-link" href="/group/' + response.data.group[key].id + '"><p class="group-name">' + response.data.group[key].group_name + '</p><div class="newMessage"></div></a></div>'
+								}
+								
+
+								$('#display').append(temp)
+							}
+						}
+					})
+				}
+			</script>
+		</div>
+	</main>
+</body>
+</html>

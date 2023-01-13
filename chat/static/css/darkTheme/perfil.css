@@ -1,0 +1,13 @@
+body {
+    background-color: #000000;
+    color: white;
+}
+
+.perfil-photo {
+    background-color: #010248;
+    border-color: white;
+}
+
+.modal {
+    background-color: #5a5a5a;
+}

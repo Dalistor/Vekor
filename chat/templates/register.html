@@ -1,0 +1,45 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vekor - registro</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/entrance.css'%}">
+</head>
+<body>
+    <main>
+        <section class="area">
+
+            <div class="register">
+
+                <h1 class="title">registro</h1>
+
+                <form name="form-users" id="formUsers" method="POST">
+
+                    {% csrf_token %}
+
+                    {% if msg %}
+                        <p class="{{class}}">{{msg}}</p>
+                    {% endif %}
+
+                    <input type="text" class="user-field" name="personal_name" placeholder="Codenome (não pode mudar)" maxlength="20" autofocus required>
+                    <input type="text" class="user-field" name="username" placeholder="Nome" maxlength="20" autofocus required>
+                    <input type="email" class="user-field" name="email" placeholder="Email" maxlength="100" autofocus required>
+                    <input type="password" class="user-field" name="password" placeholder="Senha" autofocus required>
+                    <input type="password" class="user-field" name="confirm_password" placeholder="Confirme sua senha" autofocus required></label>
+
+                    <input type="submit" value="enviar" id="submit">
+
+                </form>
+
+                <p class="register-p">Já tem uma conta? <a href="/login/">entrar</a></p>
+
+            </div>
+
+        </section>
+    </main>
+</body>
+</html>

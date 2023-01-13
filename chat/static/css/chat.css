@@ -1,0 +1,255 @@
+body {
+    background-color: #f0f8ff;
+}
+
+.container {
+    margin: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 95%;
+}
+
+header {
+    background-color: #4c83af;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5em;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.header-top-menu {
+    width: 20%;
+    display: inline;
+}
+
+.menu-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5em;
+}
+
+.menu-perfil-div-photo, .acount-photo {
+    border-radius: 150px;
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    position: relative;
+    margin-right: 0.7rem;
+}
+
+.contact-photo {
+    border-radius: 150px;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    position: relative;
+    margin-right: 0.7rem;
+}
+
+.contact-top {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: black;
+}
+
+.menu-perfil-div-photo img, .acount-photo img, .contact-photo img {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+.menu-perfil {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: black;
+}
+
+.menu-down {
+    padding: 1rem;
+    border-top: solid black 2px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.menu-down input {
+    border-top: solid black 2px;
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5em;
+    padding-right: 3em;
+    padding-left: 1em;
+    border-radius: 10px;
+    border: none;
+    outline: 0;
+}
+
+.header-perfil-name {
+    font-size: large;
+}
+
+.header-title {
+    font-size: x-large;
+    color: #fffff0;
+}
+
+.message_area {
+    display: flex;
+    flex-direction: column;
+    background-color: #8ebde2;
+    width: 95%;
+    border-radius: 10px;
+}
+
+.message_area form {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.message-field {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    width: 90%;
+    margin-bottom: 1rem;
+    resize: none;
+}
+
+.message_area input[type="submit"], #sendImage {
+    display: block;
+    background-color: aliceblue;
+    color: #00004b;
+    font-size: 15px;
+    padding: 0.3rem;
+    cursor: pointer;
+    transition: 0.5s;
+    border-radius: 10px;
+    border: none;
+    width: 8rem;
+}
+
+#post-form div {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.message_area input[type="submit"]:hover {
+    background-color: #babec2;
+}
+
+.message-image {
+    display: block;
+    margin: 0.3rem;
+}
+
+#display {
+    padding: 0.5em;
+    height: 50vh;
+    overflow-y: auto;
+    border: solid black 2px;
+    border-radius: 10px;
+}
+
+#display::-webkit-scrollbar {
+    width: 7px;
+}
+
+.message-content {
+    max-width: 70%;
+    min-width: 15%;
+    display: inline-block;
+    padding: 0.5rem;
+    border-radius: 10px;
+    margin: 0.3rem 0;
+}
+
+.message-content p {
+    word-break: break-word;
+    margin-bottom: 0.2rem;
+}
+
+.message_div-user {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.message-people {
+    background-color: #aabedd;
+}
+
+.message-people-group {
+    background-color: #aabedd;
+    margin-left: 10px;
+}
+
+.message-user {
+    background-color: #a9d1ff;
+    cursor: pointer;
+}
+
+.message_time-user {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.message_div-user .message-time {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+}
+
+.notView_message, .view_message {
+    margin-left: 7px;
+    display: inline-block;
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+}
+
+.notView_message {
+    border: solid #838383 1px;
+    background-color: #838383;
+}
+
+.view_message {
+    border: solid #00e4f7 1px;
+    background-color: #00e4f7;
+}
+
+@media screen and (max-width: 600px) {
+    .message-image {
+        width: 185px;
+    }
+}
+
+@media screen and (min-width: 600px) {
+    .message-people-group {
+        margin-left: 20px;
+    }
+
+    .message-field {
+        width: 25rem;
+        height: 2.5rem;
+    }
+}
+
+@media screen and (min-width: 900px) {
+    .message-field {
+        width: 50rem;
+        height: 3.5rem;
+    }
+}

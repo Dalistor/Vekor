@@ -1,0 +1,237 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Vekor - perfil</title>
+	<link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/perfil.css' %}">
+	{% if userAcount.acount_darkTheme %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/darkTheme/perfil.css' %}">
+	{% endif %}
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+</head>
+<body>
+	<main class="container">
+		<div class="perfil-photo">
+			<div id="form_photo">
+				<img src="{{acount.acount_photo.url}}" id="photo">
+				{% if request.user == acount.acount_user %}
+				<form type="POST" enctype="multipart/form-data">
+					<input type="file" name="acount_photo" accept="image/*" id="photo_input" style="display: none;">
+					{% csrf_token %}
+					<script type="text/javascript">
+						let photo = $('#photo')
+						let input_file = $('#photo_input')
+
+						photo.click(() => {
+						  	input_file.click();
+						})
+
+						$('#photo_input').on('change', (item)=> {
+							const target = item.target
+							const file = target.files[0]
+
+							let img = $('#photo_input')[0].files[0]
+
+							if (file) {
+								const reader = new FileReader()
+								reader.readAsDataURL(file)
+
+								reader.addEventListener('load', (e)=> {
+									const thisReader = e.target
+									const img_element = document.createElement('img')
+
+									let src = URL.createObjectURL(img)
+									resizeImage(src, {width: 100, height: 100}).then(function (resized_img) {
+								    	img_element.src = URL.createObjectURL(resized_img)
+
+								    	let formData = new FormData()
+										formData.append('alter_collum', 'alter_photo')
+										formData.append('alter_value', resized_img)
+										formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val())
+
+										$('#photo').prop('src', img_element.src)
+
+										$.ajax({
+											url:'/alter/{{request.user.id}}',
+											type:'POST',
+											data: formData,
+											processData: false,
+				            				contentType: false,
+										})
+								    })
+
+									img_element.id = 'photo'
+								})
+							}
+						})
+
+
+						function resizeImage(src, options) {
+
+						    return loadImage(document.createElement('img'), src).then(function (image) {
+
+						        var canvas = document.createElement('canvas');
+
+						        if (options.width && !options.height) {
+						            options.height = image.height * (options.width / image.width)
+						        } else if (!options.width && options.height) {
+						            options.width = image.width * (options.height / image.height)
+						        }
+
+						        Object.assign(canvas, options);
+
+						        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+
+						        return new Promise(function (resolve) {
+						            canvas.toBlob(resolve, options.type || 'image/png', options.quality)
+						        })
+						    })
+						}
+
+						function loadImage(img, src) {
+						    return new Promise((resolve, reject) => {
+						        img.src = src;
+						        img.completed ? resolve(img) : img.addEventListener('load', function () {
+						            resolve(img)
+						        });
+						        img.addEventListener('error', reject);
+						    })
+						}
+					</script>
+				</form>
+				{% endif %}
+			</div>
+		</div>
+		<div class="perfil-details">
+			<div id="perfil_name">
+				<h2>Nome</h2>
+				<p class="perfil-name" id="name">{{acount.acount_name}}</p>
+			</div>
+			<div id="perfil_description">
+				<h2>Recado</h2>
+				<p class="perfil-description" id="description">{{acount.acount_description}}</p>
+			</div>
+		</div>
+	{% if request.user == acount.acount_user %}
+		<div class="perfil_config">
+			<h2>Configurações</h2>
+
+			<div class="config_options">
+				<div>
+					<label class="config" for="id_private" id="private">Privado: </label>
+					<select id="id_private">
+						{% if acount.acount_private %}
+						<option value="0">Não</option>
+						<option value="1" selected>Sim</option>
+						{% else %}
+						<option value="0" selected>Não</option>
+						<option value="1">Sim</option>
+						{% endif %}
+					</select>
+				</div>
+
+				<div>
+					<label class="config" for="id_private" id="theme">Modo escuro: </label>
+					<select id="id_theme">
+						{% if acount.acount_darkTheme %}
+						<option value="0">Não</option>
+						<option value="1" selected>Sim</option>
+						{% else %}
+						<option value="0" selected>Não</option>
+						<option value="1">Sim</option>
+						{% endif %}
+					</select>
+				</div>
+			</div>
+		</div>
+	{% endif %}
+	</main>
+
+	{% if request.user == acount.acount_user %}
+	<div class="popup-wrapper">
+		<div class="modal-container">
+			<div class="modal">
+				<form id="post-form">
+					{% csrf_token %}
+					<input type="text" placeholder="" id="popup_input" maxlength="25">
+					<input type="submit" value="Salvar">
+				</form>
+
+				<script type="text/javascript">
+					function saveChanges(collunm, value) {
+				    	$.ajax({
+				        	type:'POST',
+				        	url:'/alter/{{request.user.id}}',
+				        	data:{
+				            	alter_collum: collunm,
+				            	alter_value: value,
+				          		csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+				        	},
+				        	success: (e)=> {console.log('sucesso' + '\n' + e)},
+				        	error: (e)=> {console.log('error' + '\n' + e)}
+				      	})
+					}
+
+					$(document).on('submit','#post-form',function(e){
+				    	e.preventDefault();
+
+				    	saveChanges($('#popup_input').prop('name'), $('#popup_input').val())
+				    	
+				      	intput_name = $('#popup_input').prop('name').split('_')[1]
+				      	$('#'+intput_name).text($('#popup_input').val())
+				      	$('#popup_input').val('')
+
+				      	$('.modal-container').removeClass('active')
+				      	$('.popup-wrapper').hide()
+				    });
+
+					$('#id_private').on('change', ()=> {
+						saveChanges('private', $('#id_private').val())
+					});
+
+					$('#id_theme').on('change', ()=> {
+						saveChanges('theme', $('#id_theme').val())
+					});
+				</script>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		const modal 			= document.querySelector('.modal-container')
+		const wrapper			= document.querySelector('.popup-wrapper')
+		const body				= document.querySelector('body')
+
+		const name 				= document.getElementById('perfil_name')
+		const description 		= document.getElementById('perfil_description')
+
+		const input 			= document.getElementById('popup_input')
+
+		name.addEventListener('click', ()=> {openPopup('Nome', 'alter_name')})
+		description.addEventListener('click', ()=> {openPopup('Descrição', 'alter_description')})
+
+		function openPopup(placeholder, name) {
+			modal.classList.add('active')
+			wrapper.style.display = 'block'
+
+			input.placeholder = placeholder
+			input.name = name
+		}
+
+		wrapper.addEventListener('click', ()=> {
+			const class_clicked = event.target.classList[0]
+			const class_elements = ['popup-wrapper', 'modal-container']
+
+			if (class_elements.some(class_elements => class_elements == class_clicked)) {
+				modal.classList.remove('active')
+				wrapper.style.display = 'none'
+			}
+		})
+	</script>
+	{% endif %}
+</body>
+</html>

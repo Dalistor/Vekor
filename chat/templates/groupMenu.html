@@ -1,0 +1,352 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Vekor - grupo</title>
+	<link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/groupLayout.css' %}">
+	{% if acount.acount_darkTheme %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/darkTheme/groupLayout.css' %}">
+	{% endif %}
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+	<script type="text/javascript">
+		function autoSave(operation, value) {
+			let formData = new FormData()
+			formData.append('alter_collum', operation)
+			formData.append('alter_value', value)
+			formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val())
+
+			$.ajax({
+				url:'/alterGroup/{{group.id}}',
+				type:'POST',
+				data: formData,
+				processData: false,
+	            contentType: false,
+			})
+		}
+
+		{% if admin %}
+
+		function action() {
+			$('#search').val('')
+			$('#display').empty()
+			$('#initial_display').show()
+		}
+
+		function addEvent_turnAdm(eId) {
+			$('#turnAdmin_' + eId).on('click', (item)=> {
+				id = item.currentTarget.id.split('_')[1]
+
+				autoSave('alter_turnAdmin', id)
+
+				$('#turnAdmin_' + id).remove()
+				$('#exclude_' + id).remove()
+				$('#acount_buttons_' + id).append('<button type="button" id="removeAdmin_' + id + '" class="acount-buttonAdmin">Remover adm</button><button type="button" id="exclude_' + id + '" class="acount-buttonAdmin">Expulsar</button>')
+				$('#acount_name_details_' + id).append('<p class="acount-admin" id="acount_admin_p_' + id + '">Admin</p>')
+
+				addEvent_removeAdm(id)
+				addEvent_exclude(id)
+
+				action()
+			})
+		}
+
+		function addEvent_removeAdm(eId) {
+			$('#removeAdmin_' + eId).on('click', (item)=> {
+				id = item.currentTarget.id.split('_')[1]
+
+				autoSave('alter_removeAdmin', id)
+
+				$('#removeAdmin_' + id).remove()
+				$('#exclude_' + id).remove()
+				$('#acount_buttons_' + id).append('<button type="button" id="turnAdmin_' + id + '" class="acount-buttonAdmin">Tornar adm</button><button type="button" id="exclude_' + id + '" class="acount-buttonAdmin">Expulsar</button>')
+				$('#acount_admin_p_' + id).remove()
+
+				addEvent_turnAdm(id)
+				addEvent_exclude(id)
+
+				action()
+			}) 
+		}
+
+		function addEvent_exclude(eId) {
+			$('#exclude_' + eId).on('click', (item)=> {
+				id = item.currentTarget.id.split('_')[1]
+				name = $('#acount_name_' + id).html()
+
+				if (confirm('Tem certeza que quer expulsar ' + name.split(' ')[0] + '?')) {
+					autoSave('alter_exclude', id)
+
+					$('#acount_' + id).remove()
+					action()
+				}
+			}) 
+		}
+
+		function addEvent_add(eId) {
+			$('#add_' + eId).on('click', (item)=> {
+				let id = item.currentTarget.id.split('_')[1]
+				let photo = $('#acount_photo_' + id).attr('src')
+				let name = $('#acount_name_' + id).html()
+				name = name.split(' ')[0]
+				let unicName = $('#acount_name_' + id).html()
+				unicName = unicName.split('(')[1]
+				unicName = unicName.split(')')[0]
+				let description = $('#acount_description_' + id).html()
+
+				console.log(photo)
+				console.log(name)
+				console.log(unicName)
+				console.log(description)
+
+				autoSave('alter_add', id)
+
+				$('#initial_display').append(
+					'<div class="acount-content" id="acount_'+id+'"><div class="acount-content_top"><a class="acount-top" href="/perfil/'+unicName+'"><div class="acount-photo"><img src="'+photo+'" id="acount_photo_'+id+'"></div></a><a class="acount-bottom" href="/chat/{{acount.id}}/'+id+'" id="acount_botton_'+id+'"><div id="acount_name_details_' + id + '"><p class="acount-name" id="acount_name_'+id+'">'+unicName+' ('+name+')</p></div><p class="acount-description" id="acount_description_'+id+'">'+description+'</p></a></div><div class="acount-content_bottom" id="acount_buttons_'+id+'"><button type="button" id="turnAdmin_'+id+'" class="acount-buttonAdmin">Tornar adm</button><button type="button" id="exclude_'+id+'" class="acount-buttonAdmin">Expulsar</button></div></div>'
+				)
+				action()
+
+				addEvent_turnAdm(id)
+				addEvent_exclude(id)
+				
+			}) 
+		}
+
+		let elementIds = []
+		let peopleIds = []
+
+		$(document).ready(()=> {
+			for(i = 0; i < $('.acount-content').length; i++) {
+				elementId = $('.acount-content')[i].id
+				peopleId = elementId.split('_')[1]
+
+				elementIds.push(elementId)
+				peopleIds.push(peopleId)
+			}
+
+			for (var i = 0; i < elementIds.length; i++) {
+				if ($('#acount_buttons_' + peopleIds[i]).html().length <= 100) {
+					$('#acount_buttons_' + peopleIds[i]).append('<button type="button" id="turnAdmin_' + peopleIds[i] + '" class="acount-buttonAdmin">Tornar adm</button><button type="button" id="exclude_' + peopleIds[i] + '" class="acount-buttonAdmin">Expulsar</button>')
+				}
+			}
+
+			for (var i = 0; i < peopleIds.length; i++) {
+				addEvent_turnAdm(peopleIds[i])
+				addEvent_removeAdm(peopleIds[i])
+				addEvent_exclude(peopleIds[i])
+			}
+		})
+
+		{% endif %}
+	</script>
+</head>
+<body>
+	{% csrf_token %}
+	<header>
+		<div class="menu-top">
+			<div class=group>
+				<div>
+					<img src="{{group.group_photo.url}}" id="photo"> 
+					{% if admin %}
+					<input type="file" accept="image/*" id="photo_input" style="display: none;">
+					<script type="text/javascript">
+						const photo = $('#photo')
+						const inputPhoto = $('#photo_input')
+
+						photo.click(()=> {
+							inputPhoto.click()
+						})
+
+						inputPhoto.on('change', (item)=> {
+							const target = item.target
+							const file = target.files[0]
+
+							let img = inputPhoto[0].files[0]
+
+							if (file) {
+								const reader = new FileReader()
+								reader.readAsDataURL(file)
+
+								reader.addEventListener('load', (e)=> {
+									const thisReader = e.target
+									const img_element = document.createElement('img')
+
+									let src = URL.createObjectURL(img)
+									resizeImage(src, {width: 100, height: 100}).then(function (resized_img) {
+								    	img_element.src = URL.createObjectURL(resized_img)
+
+								    	$('#photo').prop('src', img_element.src)
+
+								    	autoSave('alter_photo', resized_img)
+								    })
+
+									img_element.id = 'photo'
+								})
+							}
+						})
+
+						function resizeImage(src, options) {
+						    return loadImage(document.createElement('img'), src).then(function (image) {
+
+						        var canvas = document.createElement('canvas');
+
+						        if (options.width && !options.height) {
+						            options.height = image.height * (options.width / image.width)
+						        } else if (!options.width && options.height) {
+						            options.width = image.width * (options.height / image.height)
+						        }
+
+						        Object.assign(canvas, options);
+
+						        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+
+						        return new Promise(function (resolve) {
+						            canvas.toBlob(resolve, options.type || 'image/png', options.quality)
+						        })
+						    })
+						}
+
+						function loadImage(img, src) {
+						    return new Promise((resolve, reject) => {
+						        img.src = src;
+						        img.completed ? resolve(img) : img.addEventListener('load', function () {
+						            resolve(img)
+						        });
+						        img.addEventListener('error', reject);
+						    })
+						}
+					</script>
+					{% endif %}
+				</div>
+				{% if admin %}
+				<input type="text" maxlength="20" placeholder="Nome do grupo" id="groupName" required  value="{{group.group_name}}">
+				<textarea id="groupDescription" placeholder="Descrição" name="alter_description">{{group.group_description}}</textarea>
+				<script type="text/javascript">
+					$('#groupName').on('keyup', ()=>{
+						autoSave('alter_name', $('#groupName').val())
+					})
+					$('#groupDescription').on('keyup', ()=>{
+						autoSave('alter_description', $('#groupDescription').val())
+					})
+				</script>
+				{% else %}
+				<h1>{{group.group_name}}</h1>
+				<textarea id="groupDescription" placeholder="Descrição" name="alter_description" readonly>{{group.group_description}}</textarea>
+				{% endif %}
+			</div>
+		</div>
+		{% if admin %}
+		<div class="menu-button">
+			<input type="text" maxlength="20" id="search" placeholder="Pesquisar pessoas">
+		</div>
+		<script type="text/javascript">
+			//envio de formulário GET e atualização
+			$('#search').keyup(()=>{
+
+				$.ajax({
+			        type:'GET',
+			        url:'?search=' + $('#search').val(),
+			        success: (response)=> {
+			        	$('#display').empty()
+			        	for(var key in response.search) {
+			        		var tempAcountBottom = '<div class="acount-content_bottom"><button type="button" id="add_' + response.search[key].id + '" class="acount-buttonAdmin">Adicionar</button></div>'
+
+			        		for (var i = 0; i < peopleIds.length; i++) {
+			        			if(peopleIds[i] == response.search[key].id) {
+			        				tempAcountBottom = '<div class="acount-content_bottom" id="acount_buttons_' + response.search[key].id + '"><button type="button" id="turnAdmin_' + response.search[key].id + '" class="acount-buttonAdmin">Tornar admin</button><button type="button" id="exclude_' + response.search[key].id + '" class="acount-buttonAdmin">Expulsar</button></div>'
+
+			        				break
+			        			}
+			        		}
+
+			        		var temp = '<div class="acount-content" id="acount_' + response.search[key].id + '"><div class="acount-content_top"><div class="acount-top"><div class="acount-photo"><img src="/media/' + response.search[key].acount_photo + '" id="acount_photo_' + response.search[key].id + '"></div></div><div class="acount-button"><p class="acount-name" id="acount_name_' + response.search[key].id + '">' + response.search[key].acount_unicName + ' (' + response.search[key].acount_name + ')</p><p class="acount-description" id="acount_description_' + response.search[key].id + '">' + response.search[key].acount_description + '</p></div></div>' + tempAcountBottom + '</div>'
+
+			        		$('#display').append(temp)
+			        		addEvent_add(response.search[key].id)
+			        	}
+			        },
+			        error: ()=> {
+			        	console.log('an error ocurred')
+			        }
+			    })
+
+			    if ($('#search').val() == '') {
+					$('#initial_display').show()
+				} else {
+					$('#initial_display').hide()
+				}
+			})
+		</script>
+		{% endif %}
+	</header>
+
+	<main class="container">
+		<div class="chats">
+			<div id="display"></div>
+			<div id="initial_display">
+				{% for people in group.group_users.all %}
+				{% if people.id != acount.id %}
+				<div class="acount-content" id="acount_{{people.id}}">
+					<div class="acount-content_top">
+						<a class="acount-top" href="/perfil/{{people.acount_unicName}}">
+							<div class="acount-photo">
+								<img src="{{people.acount_photo.url}}" id="acount_photo_{{people.id}}">
+							</div>
+						</a>
+						<a class="acount-bottom" href="/chat/{{acount.id}}/{{people.id}}" id="acount_botton_{{people.id}}">
+							<div id="acount_name_details_{{people.id}}">
+								<p class="acount-name" id="acount_name_{{people.id}}">{{people.acount_unicName}} ({{people.acount_name}}){% for admin in group.group_admins.all %}</p>
+								{% if people == admin %}
+								<div class="acount-admin" id="acount_admin_p_{{people.id}}">Admin</div>
+								{% endif %}
+								{% endfor %}
+							</div>
+							<p class="acount-description" id="acount_description_{{people.id}}">{{people.acount_description}}</p>
+						</a>
+					</div>
+					{% if admin %}
+					<div class="acount-content_bottom" id="acount_buttons_{{people.id}}">
+						{% for admin in group.group_admins.all %}
+						{% if people == admin %}
+						<button type="button" id="removeAdmin_{{people.id}}" class="acount-buttonAdmin">Remover adm</button>
+						<button type="button" id="exclude_{{people.id}}" class="acount-buttonAdmin">Expulsar</button>
+						{% endif %}
+						{% endfor %}
+					</div>
+					{% endif %}
+				</div>
+				{% endif %}
+				{% endfor %}
+			</div>
+		</div>
+
+		<script type="text/javascript">
+			
+		</script>
+
+		<div class="operationalButtons">
+			<button type="button" id="exit">Sair do grupo</button>
+			{% if admin %}
+			<button type="button" id="groupExclude">Excluir grupo</button>
+			{% endif %}
+			<script type="text/javascript">
+				$('#exit').on('click', ()=> {
+					if (confirm('Tem certeza que deseja sair do grupo?')) {
+						autoSave('alter_exit', {{acount.id}})
+						$(location).attr('href', '/home/{{acount}}')
+					}
+				})
+				$('#groupExclude').on('click', ()=> {
+					if (confirm('Tem certeza que deseja excluir o grupo?')) {
+						autoSave('alter_destroy', {{group.id}})
+						$(location).attr('href', '/home/{{acount}}')
+					}
+				})
+			</script>
+		</div>
+	</main>
+</body>
+</html>

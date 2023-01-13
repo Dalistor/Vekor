@@ -1,0 +1,57 @@
+body {
+    background-color: #000000;
+}
+
+header {
+    background-color: #010248;
+}
+
+.menu-perfil {
+    color: white;
+}
+
+#display {
+    border-color: white;
+}
+
+.message-people, .message-people-group {
+    background-color: #272727;
+}
+
+.message-content p, .message-time, .message_user_time {
+    color: white;
+}
+
+.message-user {
+    background-color: #010248;
+}
+
+.view_message {
+    border-color: white;
+    background-color: white;
+}
+
+.message_area {
+    background-color: #000d71;
+}
+
+.message-field {
+    background-color: black;
+    color: white;
+}
+
+.message_area input[type="submit"], #sendImage{
+    background-color: #000000;
+    color: #ffffff;
+    transition: 0.5s;
+}
+
+.message_area input[type="submit"]:hover, #sendImage:hover {
+    background-color: #ffffff;
+    color: #000000;
+    transform: scale(1.1);
+}
+
+.contact-top {
+    color: white;
+}

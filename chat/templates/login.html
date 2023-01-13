@@ -1,0 +1,42 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Vekor - login</title>
+	<link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/entrance.css' %}">
+</head>
+<body>
+	<main>
+		<section class="area">
+
+        <div class="login">
+
+            <h1 class="title">login</h1>
+
+            <form name="form-users" id="formUsers" method="POST">
+
+                {% csrf_token %}
+
+                {% if msg %}
+                    <p class="{{class}}">{{msg}}</p>
+                {% endif %}
+
+                <input type="text" class="user-field" name="username" placeholder="Usuário" autofocus required>
+                <input type="password" class="user-field" name="password" placeholder="Senha" autofocus required>
+
+                <input type="submit" id="submit" value="enviar">
+
+            </form>
+
+            <p class="login-p">Não tem uma conta?<a href="/register/">crie uma</a></p>
+
+        </div>
+
+    </section>
+	</main>
+</body>
+</html>

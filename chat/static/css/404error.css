@@ -1,0 +1,27 @@
+body {
+	background-color: #f0f8ff;
+}
+
+.error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.error h1 {
+	border: solid black 2px;
+    border-radius: 20px;
+    background-color: #cad1d6;
+    padding: 2rem;
+}
+
+.error a {
+    display: flex;
+    justify-content: space-around;
+    text-decoration: none;
+    color: black;
+    font-size: 25px;
+    border: solid;
+    border-radius: 10px;
+    background-color: #c7d9ff;
+}

@@ -1,0 +1,262 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Vekor - novo grupo</title>
+	<link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/groupLayout.css' %}">
+	{% if acount.acount_darkTheme %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/darkTheme/groupLayout.css' %}">
+	{% endif %}
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+	<script type="text/javascript">
+		const allowed_peoples = []
+
+		function addPeople(acountId) {
+			$('#acount_' + acountId).click((item)=> {
+				id = item.currentTarget.id.split('_')[1]
+				for (var i = 0; i < allowed_peoples.length; i++) {
+					if (allowed_peoples[i] == id) {
+						allowed_peoples.splice(i, 1)
+						$('#acount_' + id).css('background-color', '')
+						return
+					}
+				}
+				allowed_peoples.push(id)
+				$('#acount_' + id).css('background-color', '#b0e1ff')
+			})
+
+			for (var i = 0; i < allowed_peoples.length; i++) {
+				if (allowed_peoples[i] == acountId) {
+					$('#acount_' + acountId).css('background-color', '#b0e1ff')
+				}
+			}
+		}
+	</script>
+</head>
+<body>
+	<header>
+		<div class="menu-top">
+			<div class=group>
+				<div>
+					<img src="{% static 'imgs/default_group.png' %}" id="photo"> 
+					<input type="file" name="acount_photo" accept="image/*" id="photo_input" style="display: none;">
+					<script type="text/javascript">
+						const photo = $('#photo')
+						const inputPhoto = $('#photo_input')
+
+						photo.click(()=> {
+							inputPhoto.click()
+						})
+
+						let reImg
+
+						inputPhoto.on('change', (item)=> {
+							const target = item.target
+							const file = target.files[0]
+
+							let img = inputPhoto[0].files[0]
+
+							if (file) {
+								const reader = new FileReader()
+								reader.readAsDataURL(file)
+
+								reader.addEventListener('load', (e)=> {
+									const thisReader = e.target
+									const img_element = document.createElement('img')
+
+									let src = URL.createObjectURL(img)
+									resizeImage(src, {width: 100, height: 100}).then(function (resized_img) {
+								    	img_element.src = URL.createObjectURL(resized_img)
+								    	reImg = resized_img
+
+								    	$('#photo').prop('src', img_element.src)
+								    })
+
+									img_element.id = 'photo'
+								})
+							}
+						})
+
+						function resizeImage(src, options) {
+						    return loadImage(document.createElement('img'), src).then(function (image) {
+
+						        var canvas = document.createElement('canvas');
+
+						        if (options.width && !options.height) {
+						            options.height = image.height * (options.width / image.width)
+						        } else if (!options.width && options.height) {
+						            options.width = image.width * (options.height / image.height)
+						        }
+
+						        Object.assign(canvas, options);
+
+						        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+
+						        return new Promise(function (resolve) {
+						            canvas.toBlob(resolve, options.type || 'image/png', options.quality)
+						        })
+						    })
+						}
+
+						function loadImage(img, src) {
+						    return new Promise((resolve, reject) => {
+						        img.src = src;
+						        img.completed ? resolve(img) : img.addEventListener('load', function () {
+						            resolve(img)
+						        });
+						        img.addEventListener('error', reject);
+						    })
+						}
+					</script>
+				</div>
+				<input type="text" maxlength="20" placeholder="Nome do grupo" id="groupName" required>
+				<textarea id="groupDescription" placeholder="Descrição"></textarea>
+			</div>
+		</div>
+		<div class="menu-button">
+			<input type="text" maxlength="20" id="search" placeholder="Pesquisar pessoas">
+		</div>
+		<script type="text/javascript">
+			//envio de formulário GET e atualização
+			$('#search').keyup(()=>{
+
+				$.ajax({
+			        type:'GET',
+			        url:'?search=' + $('#search').val(),
+			        success: (response)=> {
+			        	$('#display').empty()
+			        	id_views = []
+			        	for(var key in response.search) {
+			        		var temp = '<div class="acount-content" id="acount_' + response.search[key].id + '"><div class="acount-content_top"><div class="acount-top"><div class="acount-photo"><img src="/media/' + response.search[key].acount_photo + '" id="acount_photo_' + response.search[key].id + '"></div></div><div class="acount-button"><p class="acount-name" id="acount_name_' + response.search[key].id + '">' + response.search[key].acount_unicName + ' (' + response.search[key].acount_name + ')</p><p class="acount-description" id="acount_description_' + response.search[key].id + '">' + response.search[key].acount_description + '</p></div>'
+
+			        		$('#display').append(temp)
+
+			        		addPeople(response.search[key].id)
+			        	}
+			        },
+			        error: ()=> {
+			        	console.log('an error ocurred')
+			        }
+			    })
+
+			    if ($('#search').val() == '') {
+					$('#initial_display').show()
+				} else {
+					$('#initial_display').hide()
+				}
+			})
+		</script>
+	</header>
+
+	<main class="container">
+		<div class="chats">
+			<div id="display"></div>
+			<div id="initial_display"></div>
+			<script type="text/javascript">
+				//mudança no display dos chats
+
+				setInterval(()=>{
+					$.ajax({
+						type:'GET',
+						url:'?chats=' + {{request.user.id}},
+						success: (response)=> {
+							if ($('#search').val() != '') {
+								return
+							}
+
+							//atualizar chat automáticamente
+							const names = []
+							const unicNames = []
+							const descriptions = []
+							const photos = []
+							const ids = []
+
+							$('#initial_display').empty()
+							const chats = response.chats
+
+							for (var item = 0; item < chats.length; item++) {
+								switch(item) {
+									//nomes
+									case 0:
+										pushItem(chats[item], names)
+										break
+
+									//nomes unicos
+									case 1:
+										pushItem(chats[item], unicNames)
+										break
+
+									//descrição
+									case 2:
+										pushItem(chats[item], descriptions)
+										break
+
+									//foto
+									case 3:
+										pushItem(chats[item], photos)
+										break
+
+									//id
+									case 4:
+										pushItem(chats[item], ids)
+										break
+								}
+							}
+
+							for (var i = 0; i < names.length; i++) {
+								var temp = '<div class="acount-content" id="acount_' + ids[i] + '"><div class="acount-content_top"><div class="acount-top"><div class="acount-photo"><img src="/media/' + photos[i] + '" id="acount_photo_' + ids[i] + '"></div></div><div class="acount-button"><p class="acount-name" id="acount_name_' + ids[i] + '">' + unicNames[i] + ' (' + names[i] + ')</p><p class="acount-description" id="acount_description_' + names[i] + '">' + descriptions[i] + '</p></div>'
+
+								$('#initial_display').append(temp)
+
+								for (var j = 0; j < allowed_peoples.length; j++) {
+									if (allowed_peoples[j] == ids[i]) {
+	 									$('#acount_' + ids[i]).css('background-color', '#b0e1ff')
+									}
+								}
+
+								addPeople(ids[i])
+							}
+						}
+					})
+
+				}, 1000)
+
+				function pushItem(chat, array) {
+					for (var i = 0; i < chat.length; i++) {
+						array.push(chat[i])
+					}
+				}
+			</script>
+		</div>
+
+		<div class="operationalButtons">
+			<button type="button" id="send">Novo grupo</button>
+		</div>
+		
+		{% csrf_token %}
+
+		<script type="text/javascript">
+			$('#send').click(()=> {
+				let formData = new FormData()
+				formData.append('groupName', $('#groupName').val())
+				formData.append('groupDescription', $('#groupDescription').val())
+				formData.append('groupPhoto', reImg)
+				formData.append('groupPeoples', allowed_peoples)
+				formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val())
+
+				const post = $.ajax({
+					url:'/createGroup/',
+					type:'POST',
+					data: formData,
+					processData: false,
+    				contentType: false,
+				}).then($(location).attr('href', '/home/{{acount}}'))
+			})
+		</script>
+	</main>
+</body>
+</html>

@@ -1,0 +1,219 @@
+body {
+    background-color: #f0f8ff;
+    height: 90vh;
+}
+
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    margin: 0 1rem;
+}
+
+header {
+    background-color: #4c83af;
+}
+
+.header-top-menu {
+    width: 20%;
+    display: inline;
+}
+
+.perfil {
+    color: black;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.menu-top {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5em;
+    padding-bottom: 1rem;
+    border-bottom: solid black 2px;
+}
+
+.menu-button {
+    padding: 1rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.acount-photo {
+    border-radius: 150px;
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    position: relative;
+    margin-right: 0.7rem;
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    height: 50vh;
+}
+
+.group div {
+    border-radius: 150px;
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+    position: relative;
+} 
+
+.group div img, .acount-photo img {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+.group input, .menu-button input {
+    border: none;
+    border-radius: 10px;
+    padding: 0.3em;
+    outline: none;
+}
+
+.group input[type="text"], .menu-button input[type="text"] {
+    padding-left: 0.5em;
+}
+
+.group textarea {
+    width: 250px;
+    height: 15vh;
+    border: none;
+    outline: none;
+    resize: none;
+    border-radius: 10px;
+    padding: 0.5rem;
+}
+
+.group h1 {
+    font-size: 30px;
+}
+
+.header-perfil-name {
+    font-size: large;
+}
+
+.header-title {
+    font-size: x-large;
+    color: #fffff0;
+}
+
+.main-p {
+    margin-bottom: 2rem;
+}
+
+.acount-content {
+    display: flex;
+    flex-direction: column;
+    margin: 1rem 0;
+    padding: 0.5rem;
+    border-top: solid black 2px;
+    border-bottom: solid black 2px;
+    text-decoration: none;
+    color: black;
+}
+
+.acount-content_top {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.acount-content_bottom {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+.acount-bottom {
+    text-decoration: none;
+    color: black;
+}
+
+.acount-bottom div {
+    display: flex;
+}
+
+.acount-link {
+    color: black;
+    text-decoration: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.acount-description {
+    padding-left: 0.5em;
+    color: grey;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.acount-buttonAdmin {
+    border-radius: 10px;
+    outline: none;
+    border: none;
+    padding: 5px 10px;
+    width: 110px;
+    background-color: #7bb4e2;
+    cursor: pointer;
+}
+
+.acount-admin {
+    color: #44dcbb;
+    padding-left: 5px;
+}
+
+.chats {
+    height: 80%;
+    width: 90%;
+    overflow-y: auto;
+    border: solid black 2px;
+    border-radius: 10px;
+    padding: 0 1rem;
+}
+
+.operationalButtons {
+    display: flex;
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+.operationalButtons button {
+    width: 100px;
+    outline: none;
+    border-radius: 10px;
+    border: none;
+    padding: 0.5rem;
+    background-color: #4c83af;
+    cursor: pointer;
+    transition: 0.5s;
+}
+
+.operationalButtons button:hover {
+    transform: scale(1.1);
+}
+
+@media screen and (min-width: 600px) {
+    .group textarea {
+        width: 500px;
+    }
+}
+
+@media screen and (min-width: 900px) {
+    .group textarea {
+        width: 800px;
+    }
+}

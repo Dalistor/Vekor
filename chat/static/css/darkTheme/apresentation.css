@@ -1,0 +1,38 @@
+body {
+	background-color: #f0f8ff;
+}
+
+.container {
+	margin: 1rem;
+}
+
+header {
+	display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 1.5rem;
+    background-color: #4c83af;
+}
+
+header a, main a {
+    text-decoration: none;
+    color: ivory;
+    padding: 10px 20px;
+    background-color: #9bacd1;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.5s;
+}
+
+header a:hover, main a:hover {
+	background-color: #7f8daa;
+}
+
+.header-title {
+    font-size: x-large;
+    color: #fffff0;
+}
+
+.main-p {
+    margin-bottom: 2rem;
+}

@@ -1,0 +1,378 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<title>vekor - chat em grupo</title>
+	<link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/chat.css' %}">
+	{% if acount.acount_darkTheme %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/darkTheme/chat.css' %}">
+	{% endif %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/itens/menu.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/itens/popup.css' %}">
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+</head>
+<body>
+	<header>
+		<a class="menu-perfil" href="/groupMenu/{{group.id}}">
+			<div class="menu-perfil-div-photo">
+				<img src="{{group.group_photo.url}}">
+			</div>
+			<p class="header-perfil-name">{{group.group_name}}</p>
+		</a>
+
+		<input type="checkbox" id="check" class="menu-input">
+		<script type="text/javascript">
+			$('#check').on('change', ()=> {
+				if($('#check').is(':checked')) {
+					$(document).on('click', (e)=> {
+						if(e.target.classList[0] != 'menu-img') {
+							$('#check').prop('checked', false)
+						}
+						$(document).off('click')
+					})
+				}
+			})
+		</script>
+		{% if acount.acount_darkTheme %}
+		<label for="check" class="menu-label"><img src="{% static 'imgs/darkMenu.png' %}" class="menu-img"></label>
+		{% else %}
+		<label for="check" class="menu-label"><img src="{% static 'imgs/menu.png' %}" class="menu-img"></label>
+		{% endif %}
+
+		<nav class="menu-nav">
+			<ul class="menu-ul">
+				{% if request.user.is_staff %}
+				<li><a href="/admin/chat/group/{{group.id}}/change" class="menu-a">Administrar</a></li>
+				{% endif %}
+				<li><a href="/groupMenu/{{group.id}}" class="menu-a">Dados do grupo</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<main>
+		<div class="container">
+			<div class="display" id="display" ></div>
+			<script type="text/javascript">
+				function send(operation, id, value) {
+					let formData = new FormData()
+					formData.append('alter_collum', operation)
+					formData.append('alter_id', id)
+					formData.append('alter_value', value)
+					formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val())
+
+					$.ajax({
+						url:'/alterMessage/',
+						type:'POST',
+						data: formData,
+						processData: false,
+			            contentType: false,
+					})
+				}
+
+				function message_edit(id, otherMessage) {
+					if (otherMessage) {
+						$('#editMessage_' + id).off('click')
+					} else {
+						$('#editMessage_' + id).on('click', ()=> {
+							let value = prompt("Insira a nova mensagem")
+							if (value != null && value != '') {
+								send('alter', id, value)
+							}
+
+							$('#editMessage_' + id).off('click')
+						})
+					}
+				}
+
+				function message_delete(id, otherMessage) {
+					if (otherMessage) {
+						$('#deleteMessage_' + id).off('click')
+					} else {
+						$('#deleteMessage_' + id).on('click', ()=> {
+							if (confirm("Tem certeza que deseja deletar esta mensagem?")) {
+								send('delete', id, null)
+							}
+						})
+					}
+				}
+
+				function closePopup(messageId, otherMessage) {
+					if (otherMessage) {
+						$('#popup_' + messageId).css({
+							display: 'none'
+						})
+						$(document).off('click')
+					} else {
+						$(document).on('click', (item)=> {
+							console.log(item.target.classList[0])
+							clickedClass = item.target.classList[0]
+
+							if(clickedClass == 'popup-area' || clickedClass == 'message-button' || clickedClass == 'popup-message') {
+								$('#popup_area_' + messageId).css({
+									display: 'none'
+								})
+								$(document).off('click')
+							}
+						})
+					}
+				}
+
+				let past_response = 0
+				let past_id
+				let lastId
+				let all_content = []
+				let all_views = []
+
+		      	setInterval(function(){
+		      		let stop = false
+
+		          	$.ajax({
+		              	type: 'GET',
+		              	url : "/groupGet/{{group.id}}",
+		              	success: (response)=> {
+		              		if (response.data.message.length == past_response) {
+	                  			for (var i = 0; i < response.data.message.length; i++) {
+		                  			if (all_content[i] != response.data.message[i].message_content || all_views[i] != response.data.message[i].message_visualize) {
+		                  				all_content[i] = response.data.message[i].message_content
+		                  				all_views[i] = response.data.message[i].message_visualize
+
+		                  				stop = false
+		                  				break
+		                  			} else {
+		                  				stop = true
+		                  			}
+		                  		}
+	                  		} else {
+	                  			all_content = []
+
+	                  			for (var i = 0; i < response.data.message.length; i++) {
+	                  				all_content.push(response.data.message[i].message_content)
+	                  			}
+	                  		}
+
+	                  		if (stop) {
+	                  			return
+	                  		}
+
+	              			$("#display").empty()
+
+		                  	for (var key in response.data.message) {
+		                  		date = response.data.message[key].message_posted_at
+			                  	date = date.split('T')
+			                  	date = date[1].split(':')
+			                  	date = date[0] + ':' + date[1]
+
+			                  	let src
+			                  	let name
+			                  	let unicName
+			                  	let id
+
+			                  	for (var i = 0; i < response.data.contacts.length; i++) {
+			                  		if (response.data.message[key].message_user_id == response.data.contacts[i].id) {
+			                  			src = response.data.contacts[i].acount_photo
+			                  			name = response.data.contacts[i].acount_name
+			                  			unicName = response.data.contacts[i].acount_unicName
+			                  			id = response.data.contacts[i].id
+			                  		}
+			                  	}
+
+		                  		if (response.data.message[key].message_user_id == {{acount.id}}) {
+
+		                  			if (response.data.message[key].message_visualize == false) {
+		                  				message_view = "notView_message"
+		                  			} else {
+		                  				message_view = "view_message"
+		                  			}
+
+		                  			var temp
+		                  			if (response.data.message[key].message_image) {
+		                  				temp = "<div class='message_div-user'><div class='message-content message-user' id='message_" + response.data.message[key].id + "'><img class=message-image src=/media/" + response.data.message[key].message_image + "><span class='message-time message_user_time'>" + date + " <div class=" + message_view + "></div></span></div><div class='popup-area' id='popup_area_" + response.data.message[key].id + "'><div class='popup-message'><button class='message-button' id='deleteMessage_"+ response.data.message[key].id +"'>Deletar</button></div></div>";
+		                  			} else {
+		                  				temp = "<div class='message_div-user'><div class='message-content message-user' id='message_" + response.data.message[key].id + "'><p class='message-p'>" + response.data.message[key].message_content + "</p><span class='message-time message_user_time'>" + date + " <div class=" + message_view + "></div></span></div><div class='popup-area' id='popup_area_" + response.data.message[key].id + "'><div class='popup-message'><button class='message-button' id='editMessage_"+ response.data.message[key].id +"'>Editar</button><button class='message-button' id='deleteMessage_"+ response.data.message[key].id +"'>Deletar</button></div></div>";
+		                  			}
+
+			                      	past_id = response.data.message[key].message_user_id
+			                      	$("#display").append(temp);
+
+			                      	$('#message_' + response.data.message[key].id).on('click', (item)=> {
+			                      		const messageId = item.currentTarget.id.split('_')[1]
+
+			                      		closePopup(lastId, true)
+			                      		closePopup(messageId, false)
+
+										message_delete(messageId, true)
+			                      		message_edit(messageId, true)
+			                      		message_delete(messageId, false)
+			                      		message_edit(messageId, false)
+			                      		
+			                      		$('#popup_area_' + messageId).css({
+			                      			display: 'flex',
+			                      			justifyContent: 'center',
+											alignItems: 'center'
+			                      		})
+
+			                      		lastId = messageId
+			                      	})
+
+		                  		} else {
+		                  			if (response.data.message[key].message_user_id != past_id) {
+		                  				var temp
+			                  			if (response.data.message[key].message_image) {
+			                  				temp = "<div class='contact-top'><a class='contact-photo' href='/perfil/" + unicName + "'><img src=/media/" + src + "></a><a class='contact-top' href='/chat/{{acount.id}}/" + id + "'><p class='header-perfil-name'>" + unicName + " (" + name + ")" + "</p></a></div><div><div class='message-content message-people-group'><img class='message-image' src=/media/" + response.data.message[key].message_image + "><span class='message-time'>" + date + "</span></div>";
+			                  			} else {
+			                  				temp = "<div class='contact-top'><a class='contact-photo' href='/perfil/" + unicName + "'><img src=/media/" + src + "></a><a class='contact-top' href='/chat/{{acount.id}}/" + id + "'><p class='header-perfil-name'>" + unicName + " (" + name + ")" + "</p></a></div><div><div class='message-content message-people-group'><p>" + response.data.message[key].message_content + "</p><span class='message-time'>" + date + "</span></div>";
+			                  			}
+
+		                  				past_id = response.data.message[key].message_user_id
+		                  				
+
+		                  			} else {
+		                  				var temp
+		                  				if (response.data.message[key].message_image) {
+		                  					temp = "</div><div><div class='message-content message-people-group'><img class='message-image' src='/media/" + response.data.message[key].message_image + "'><span class='message-time'>" + date + "</span></div>";
+		                  				} else {
+		                  					temp = "</div><div><div class='message-content message-people-group'><p>" + response.data.message[key].message_content + "</p><span class='message-time'>" + date + "</span></div>";
+		                  				}
+		                  			}
+
+		                  			$("#display").append(temp);
+		                  		}
+
+		                  	}
+
+		                  	if (response.data.message.length != past_response || past_response == 0) {
+		                  		setTimeout(()=>{
+		                  			$('#display').scrollTop($('#display')[0].scrollHeight)
+		                  		}, 500)
+		              		}
+		              		past_response = response.data.message.length
+		              		past_id = null
+		              	},
+		              	error: ()=> {
+		              		console.log('an error ocurred')
+		              	}
+		          	});
+		      	},200);
+			</script>
+		</div>
+		<div class="message_area">
+			<form id="post-form">
+				<textarea type="text" placeholder="Mensagem" class="message-field" maxlength="10000" id="message" autocomplete="off" required></textarea>
+				<div>
+					<input type="submit" value="Enviar">
+					<input type="file" id="file" accept="image/*" style="display: none;">
+					<button type="button" id="sendImage">Enviar foto</button>
+				</div>
+				{% csrf_token %}
+
+				<script type="text/javascript">
+				    $(document).on('submit','#post-form',function(e){
+				    	e.preventDefault()
+
+				    	sendMessage()
+				    })
+
+				    $(document).on('keyup', (e)=> {
+				    	if (e.keyCode == 13) {
+				    		sendMessage()
+				    	}
+				    })
+
+				    function sendMessage() {
+				    	$.ajax({
+				        	type:'POST',
+				        	url:'/groupSend/',
+				        	data:{
+				            	user_id:{{request.user.id}},
+				            	group_id:{{group.id}},
+				            	message:$('#message').val(),
+				          		csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+				        	}
+				      	})
+				      	document.getElementById('message').value = ''
+				    }
+				</script>
+
+				<script>
+					$('#sendImage').on('click', ()=> {
+						$('#file').click()
+					})
+
+					$('#file').on('change', (item)=> {
+						const target = item.target
+						const file = target.files[0]
+
+						let img = $('#file')[0].files[0]
+
+						if (file) {
+							const reader = new FileReader()
+							reader.readAsDataURL(file)
+
+							reader.addEventListener('load', (e)=> {
+								const thisReader = e.target
+								const img_element = document.createElement('img')
+
+								let src = URL.createObjectURL(img)
+								resizeImage(src, {width: 250}).then(function (resized_img) {
+							    	let formData = new FormData()
+
+									formData.append('user_id', {{request.user.id}})
+									formData.append('group_id', {{group.id}})
+									formData.append('message', '')
+									formData.append('image', resized_img)
+									formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val())
+
+									$.ajax({
+										url:'/groupSend/',
+										type:'POST',
+										data: formData,
+										processData: false,
+			            				contentType: false,
+									})
+							    })
+							})
+						}
+					})
+
+
+					function resizeImage(src, options) {
+
+					    return loadImage(document.createElement('img'), src).then(function (image) {
+
+					        var canvas = document.createElement('canvas');
+
+					        if (options.width && !options.height) {
+					            options.height = image.height * (options.width / image.width)
+					        } else if (!options.width && options.height) {
+					            options.width = image.width * (options.height / image.height)
+					        }
+
+					        Object.assign(canvas, options);
+
+					        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+
+					        return new Promise(function (resolve) {
+					            canvas.toBlob(resolve, options.type || 'image/png', options.quality)
+					        })
+					    })
+					}
+
+					function loadImage(img, src) {
+					    return new Promise((resolve, reject) => {
+					        img.src = src;
+					        img.completed ? resolve(img) : img.addEventListener('load', function () {
+					            resolve(img)
+					        });
+					        img.addEventListener('error', reject);
+					    })
+					}
+				</script>
+			</form>
+		</div>
+	</main>
+</body>
+</html>
