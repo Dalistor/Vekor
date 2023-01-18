@@ -126,6 +126,8 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
+SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = ['chat/static/']
 

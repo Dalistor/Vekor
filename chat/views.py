@@ -1,12 +1,16 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from .models import Acount, Chat, Group, Messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+
 import requests
 import json
 
+#FUNÇÕES USADAS NAS VIEWS
+
+#salva o id do OneSignal na conta do usuário
 @csrf_exempt
 def saveUserSignal(request, id):
 	acount = Acount.objects.get(pk=id)
@@ -16,6 +20,7 @@ def saveUserSignal(request, id):
 
 	return HttpResponse('saved')
 
+#função para enviar notificações quando envia uma nova mensagem
 def sendNotify(acount, signalId, message, title):
 	header = {
 	    "accept": "application/json",
@@ -39,168 +44,7 @@ def sendNotify(acount, signalId, message, title):
 	acount.acount_notifyId = json.loads(req.content).get('id')
 	acount.save()
 
-#apresentação do site
-def view_apresentation(request):
-	if not request.user.is_authenticated:
-		return render(request, 'apresentation.html')
-	else:
-		return redirect('/home/' + str(request.user))
-
-#login
-def view_login(request):
-	try:
-		if request.method == 'POST':
-			username = request.POST['username']
-			password = request.POST['password']
-
-			user = authenticate(username=username, password=password)
-
-			if user is not None:
-				login(request, user)
-				return redirect('/home/' + str(request.user))
-
-			else:
-				return render(request, 'login.html', {
-					'msg': 'usuário ou senha incorretos',
-					'class': 'msg-error'
-				})
-
-		else:
-			return render(request, 'login.html')
-
-	except Exception as e:
-		return render(request, 'login.html', {
-			'msg': 'verificação CSRF falhou, tente novamente',
-			'class': 'msg-error'
-		})
-
-
-#logout
-def view_logout(request):
-	logout(request)
-
-	return redirect('/login/')
-
-#registro
-def view_register(request):
-	if request.method == 'POST':
-		personal   = request.POST['personal_name']
-		username   = request.POST['username']
-		email      = request.POST['email']
-		password   = request.POST['password']
-		c_password = request.POST['confirm_password']
-
-		if password == c_password:
-			try:
-				user = User.objects.create_user(username=personal, email=email, password=password)
-			except Exception as e:
-				return render(request, 'register.html', {
-					'msg': 'Nome de usuário já existe',
-					'class': 'msg-error'
-				})
-
-			if user is not None:
-				user.save()
-
-				new_user = authenticate(username=personal, password=password)
-				login(request, new_user)
-
-				Acount.objects.create(acount_name=username, acount_unicName=personal, acount_user=request.user)
-
-				return redirect('/home/' + str(request.user))
-
-		else:
-			return render(request, 'register.html', {
-				'msg': 'senhas diferentes',
-				'class': 'msg-error'
-			})
-
-	else:
-		return render(request, 'register.html')
-
-#página principal
-def view_home(request, user_name):
-	user = User.objects.get(username=user_name)
-	if user.id != request.user.id:
-		return render(request, '404error.html')
-
-	acount = Acount.objects.get(acount_user=request.user)
-
-	data = {
-		'acount': acount
-	}
-
-	#carregar chats
-	chats = takeChats(acount)
-	if len(chats) != 0:
-		data['chats'] = chats
-
-	#carregar grupos
-	groups = Group.objects.filter(group_users=acount)
-
-	if len(groups) != 0:
-		data['groups'] = groups
-
-	#pesquisa de usuários
-	if request.GET.get('search'):
-		search = request.GET.get('search')
-		search_results = Acount.objects.filter(acount_unicName__icontains=search, acount_private=False).exclude(
-			acount_unicName=acount.acount_unicName
-		)
-
-		return JsonResponse({'search':list(search_results.values())})
-
-
-	#atualização em tempo real da home
-	if request.GET.get('home'):
-		acount_id = request.GET.get('home')
-
-		#separação de categorias no chat
-		acount = Acount.objects.get(pk=acount_id)
-		chats = takeChats(acount)
-
-		data = {
-			'chats': chats
-		}
-
-		return JsonResponse({'data':data})
-
-
-	if request.GET.get('group'):
-		acount_id = request.GET.get('group')
-		acount = Acount.objects.get(pk=acount_id)
-
-		group_results = Group.objects.filter(group_users=acount_id)
-
-		group_view = []
-		for group in group_results:
-			messages = Messages.objects.filter(message_group=group).last()
-
-			if Messages.objects.filter(message_group=group).count() == 0:
-				group_view.append(True)
-			else:
-				viewed = False
-				for view in messages.message_views.all():
-					if view == acount:
-						viewed = True
-
-				group_view.append(viewed)
-
-		data = {
-			'group': list(group_results.values()),
-			'groupView': group_view,
-		}
-
-		return JsonResponse({'data': data})
-
-	if request.GET.get('perfil'):
-		acount_id = request.GET.get('perfil')
-		acount = list(Acount.objects.filter(pk=acount_id).values())
-
-		return JsonResponse({'perfil': acount})
-
-	return render(request, 'home.html', data)
-
+#função para separação dos chats
 def takeChats(acount):
 	chats1 = Chat.objects.filter(chat_user1=acount)
 	chats2 = Chat.objects.filter(chat_user2=acount)
@@ -246,25 +90,12 @@ def takeChats(acount):
 
 	return chats_list
 
-def view_perfil(request, user_name):
-	user = User.objects.get(username=user_name)
-	acount = Acount.objects.get(acount_user=user.id)
-
-	userAcount = Acount.objects.get(acount_user=request.user)
-
-	data = {
-		'acount': acount,
-		'userAcount': userAcount
-	}
-
-	return render(request, 'perfil.html', data)
-
+#Alteração de dados no perfil
 def alter(request, user_id):
 	if user_id != request.user.id:
 		return render(request, '404error.html')
 
 	acount = Acount.objects.get(acount_user=user_id)
-
 	collum = request.POST['alter_collum']
 
 	if collum == 'alter_name':
@@ -303,8 +134,6 @@ def alter(request, user_id):
 
 	elif collum == 'theme':
 		value  = request.POST['alter_value']
-			
-		print(value)
 
 		if value == '0':
 			value = False
@@ -315,36 +144,6 @@ def alter(request, user_id):
 		acount.save()
 
 		return HttpResponse('sucess')
-
-#verifica e cria uma sala, o que possíbilita o contato
-def view_chat(request, acount_id, contact_id):
-	acount = Acount.objects.get(pk=acount_id)
-	contact = Acount.objects.get(pk=contact_id)
-
-	if acount.acount_user != request.user or acount_id == contact_id:
-		return render(request, '404error.html')
-
-	if acount_id > contact_id:
-		user1 = acount
-		user2 = contact
-	else:
-		user2 = acount
-		user1 = contact
-
-	chat = Chat.objects.filter(chat_user1=user1, chat_user2=user2)
-
-	if chat.exists() == False:
-		chat = Chat.objects.create(chat_user1=user1, chat_user2=user2)
-
-	chat = Chat.objects.get(chat_user1=user1, chat_user2=user2)
-
-	data = {
-		'chat': chat,
-		'acount': acount,
-		'contact': contact
-	}
-
-	return render(request, 'chat.html', data)
 
 #envia mensagem
 def sendMessage(request):
@@ -387,6 +186,7 @@ def getMessage(request, chat):
 
 		return JsonResponse({'message':list(messages.values())})
 
+#Altera a mensagem
 def alterMessage(request):
 	operation = request.POST['alter_collum']
 	message = Messages.objects.get(pk=request.POST['alter_id'])
@@ -400,6 +200,7 @@ def alterMessage(request):
 
 	return HttpResponse('sucess')
 
+#função para visualizar mensagens
 def vizualize_messages(request, messages):
 	acount = Acount.objects.get(acount_user=request.user)
 
@@ -408,31 +209,7 @@ def vizualize_messages(request, messages):
 			message.message_visualize = True
 			message.save()
 
-def view_newGroup(request):
-	if request.user.is_authenticated == False:
-		return render(request, '404error.html')
-
-	acount = Acount.objects.get(acount_user=request.user.id)
-
-	if request.GET.get('chats'):
-		chats = takeChats(acount)
-
-		return JsonResponse({
-			'chats': chats
-		})
-
-	if request.GET.get('search'):
-		value = request.GET.get('search')
-		search_results = Acount.objects.filter(acount_unicName__icontains=value, acount_private=True).exclude(
-			acount_unicName=acount.acount_unicName
-		)
-
-		return JsonResponse({'search': list(search_results.values())})
-
-	return render(request, 'newGroup.html', {
-		'acount': acount
-	})
-
+#criação do grupo
 def createGroup(request):
 	if request.user.is_authenticated == False:
 		return render(request, '404error.html')
@@ -481,6 +258,7 @@ def createGroup(request):
 
 	return HttpResponse('group created')
 
+#verifica se usuário está no grupo
 def verify_userGroup(request, groupId):
 	partOfGroup = False
 
@@ -497,58 +275,7 @@ def verify_userGroup(request, groupId):
 
 	return partOfGroup
 
-def view_group(request, groupId):
-	if verify_userGroup(request, groupId) == False:
-		return redirect(request, '404error.html')
-
-	group = Group.objects.get(pk=groupId)
-	acount = Acount.objects.get(acount_user=request.user.id)
-
-	data = {
-		'group': group,
-		'acount': acount
-	}
-
-	return render(request, 'chatGroup.html', data)
-
-def view_groupMenu(request, groupId):
-	if verify_userGroup(request, groupId) == False:
-		return render(request, '404error.html')
-
-	group = Group.objects.get(pk=groupId)
-	acount = Acount.objects.get(acount_user=request.user.id)
-
-	data = {
-		'group': group,
-		'acount': acount
-	}
-
-	for admin in group.group_admins.all():
-		if acount == admin:
-			data['admin'] = True
-
-	if request.GET.get('search'):
-		value = request.GET.get('search')
-		search_results = Acount.objects.filter(acount_unicName__icontains=value, acount_private=True).exclude(
-			acount_unicName=acount.acount_unicName
-		)
-
-		peoplesGroup = []
-
-		for result in search_results:
-			partOfGroup = False
-			for user in group.group_users.all():
-				if result == user:
-					partOfGroup = True
-					break
-
-			if partOfGroup == False:
-				peoplesGroup.append(list(Acount.objects.filter(pk=result.id).values())[0])
-
-		return JsonResponse({'search': peoplesGroup})
-
-	return render(request, 'groupMenu.html', data)
-
+#função responsável por alterar dados do grupo
 def alterGroup(request, groupId):
 	if verify_userGroup(request, groupId) == False:
 		return redirect(request, '404error.html')
@@ -689,6 +416,7 @@ def getMessageGroup(request, groupId):
 
 		return JsonResponse({'data':data})
 
+#função responsável por dar como visualizado na views de chat em grupo
 def vizualize_groupMessages(request, messages, group):
 	acount = Acount.objects.get(acount_user=request.user)
 
@@ -707,3 +435,292 @@ def vizualize_groupMessages(request, messages, group):
 					message.message_visualize = True
 
 				message.save()
+
+#FUNÇÕES DAS VIEWS
+
+#apresentação do site (por hora está fora de uso)
+def view_apresentation(request):
+	if not request.user.is_authenticated:
+		return render(request, 'apresentation.html')
+	else:
+		return redirect('/home/' + str(request.user))
+
+#apresenta tela de login e avalia a autenticação
+def view_login(request):
+	try:
+		if request.method == 'POST':
+			username = request.POST['username']
+			password = request.POST['password']
+
+			user = authenticate(username=username, password=password)
+
+			if user is not None:
+				login(request, user)
+				return redirect('/home/' + str(request.user))
+
+			else:
+				return render(request, 'login.html', {
+					'msg': 'usuário ou senha incorretos',
+					'class': 'msg-error'
+				})
+
+		else:
+			return render(request, 'login.html')
+
+	except Exception as e:
+		return render(request, 'login.html', {
+			'msg': 'verificação CSRF falhou, tente novamente',
+			'class': 'msg-error'
+		})
+
+
+#dá log-out
+def view_logout(request):
+	logout(request)
+
+	return redirect('/login/')
+
+#mostra a tela de registro e então avalia a autenticidade
+def view_register(request):
+	if request.method == 'POST':
+		personal   = request.POST['personal_name']
+		username   = request.POST['username']
+		email      = request.POST['email']
+		password   = request.POST['password']
+		c_password = request.POST['confirm_password']
+
+		if password == c_password:
+			try:
+				user = User.objects.create_user(username=personal, email=email, password=password)
+			except Exception as e:
+				return render(request, 'register.html', {
+					'msg': 'Nome de usuário já existe',
+					'class': 'msg-error'
+				})
+
+			if user is not None:
+				user.save()
+
+				new_user = authenticate(username=personal, password=password)
+				login(request, new_user)
+
+				Acount.objects.create(acount_name=username, acount_unicName=personal, acount_user=request.user)
+
+				return redirect('/home/' + str(request.user))
+
+		else:
+			return render(request, 'register.html', {
+				'msg': 'senhas diferentes',
+				'class': 'msg-error'
+			})
+
+	else:
+		return render(request, 'register.html')
+
+#página principal
+def view_home(request, user_name):
+	user = User.objects.get(username=user_name)
+	if user.id != request.user.id:
+		return render(request, '404error.html')
+
+	acount = Acount.objects.get(acount_user=request.user)
+
+	data = {
+		'acount': acount
+	}
+
+	#carregar chats
+	chats = takeChats(acount)
+	if len(chats) != 0:
+		data['chats'] = chats
+
+	#carregar grupos
+	groups = Group.objects.filter(group_users=acount)
+
+	if len(groups) != 0:
+		data['groups'] = groups
+
+	#pesquisa de usuários
+	if request.GET.get('search'):
+		search = request.GET.get('search')
+		search_results = Acount.objects.filter(acount_unicName__icontains=search, acount_private=False).exclude(
+			acount_unicName=acount.acount_unicName
+		)
+
+		return JsonResponse({'search':list(search_results.values())})
+
+
+	#atualização em tempo real da home
+	if request.GET.get('home'):
+		acount_id = request.GET.get('home')
+
+		#separação de categorias no chat
+		acount = Acount.objects.get(pk=acount_id)
+		chats = takeChats(acount)
+
+		data = {
+			'chats': chats
+		}
+
+		return JsonResponse({'data':data})
+
+	#atualização em tempo real dos grupos
+	if request.GET.get('group'):
+		acount_id = request.GET.get('group')
+		acount = Acount.objects.get(pk=acount_id)
+
+		group_results = Group.objects.filter(group_users=acount_id)
+
+		group_view = []
+		for group in group_results:
+			messages = Messages.objects.filter(message_group=group).last()
+
+			if Messages.objects.filter(message_group=group).count() == 0:
+				group_view.append(True)
+			else:
+				viewed = False
+				for view in messages.message_views.all():
+					if view == acount:
+						viewed = True
+
+				group_view.append(viewed)
+
+		data = {
+			'group': list(group_results.values()),
+			'groupView': group_view,
+		}
+
+		return JsonResponse({'data': data})
+
+	#atualização em tempo real do perfil do usuário
+	if request.GET.get('perfil'):
+		acount_id = request.GET.get('perfil')
+		acount = list(Acount.objects.filter(pk=acount_id).values())
+
+		return JsonResponse({'perfil': acount})
+
+	return render(request, 'home.html', data)
+
+#perfil da conta
+def view_perfil(request, user_name):
+	user = User.objects.get(username=user_name)
+	acount = Acount.objects.get(acount_user=user.id)
+
+	userAcount = Acount.objects.get(acount_user=request.user)
+
+	data = {
+		'acount': acount,
+		'userAcount': userAcount
+	}
+
+	return render(request, 'perfil.html', data)
+
+#cria um meio de contato para que ambas contas possam se comunicar
+def view_chat(request, acount_id, contact_id):
+	acount = Acount.objects.get(pk=acount_id)
+	contact = Acount.objects.get(pk=contact_id)
+
+	if acount.acount_user != request.user or acount_id == contact_id:
+		return render(request, '404error.html')
+
+	if acount_id > contact_id:
+		user1 = acount
+		user2 = contact
+	else:
+		user2 = acount
+		user1 = contact
+
+	chat = Chat.objects.filter(chat_user1=user1, chat_user2=user2)
+
+	if chat.exists() == False:
+		chat = Chat.objects.create(chat_user1=user1, chat_user2=user2)
+
+	chat = Chat.objects.get(chat_user1=user1, chat_user2=user2)
+
+	data = {
+		'chat': chat,
+		'acount': acount,
+		'contact': contact
+	}
+
+	return render(request, 'chat.html', data)
+
+#carrega a tela de criar novo grupo e faz suas funções
+def view_newGroup(request):
+	if request.user.is_authenticated == False:
+		return render(request, '404error.html')
+
+	acount = Acount.objects.get(acount_user=request.user.id)
+
+	if request.GET.get('chats'):
+		chats = takeChats(acount)
+
+		return JsonResponse({
+			'chats': chats
+		})
+
+	if request.GET.get('search'):
+		value = request.GET.get('search')
+		search_results = Acount.objects.filter(acount_unicName__icontains=value, acount_private=True).exclude(
+			acount_unicName=acount.acount_unicName
+		)
+
+		return JsonResponse({'search': list(search_results.values())})
+
+	return render(request, 'newGroup.html', {
+		'acount': acount
+	})
+
+#carrega tela do grupo
+def view_group(request, groupId):
+	if verify_userGroup(request, groupId) == False:
+		return redirect(request, '404error.html')
+
+	group = Group.objects.get(pk=groupId)
+	acount = Acount.objects.get(acount_user=request.user.id)
+
+	data = {
+		'group': group,
+		'acount': acount
+	}
+
+	return render(request, 'chatGroup.html', data)
+
+#carrega tela do grupo e faz suas funções
+def view_groupMenu(request, groupId):
+	if verify_userGroup(request, groupId) == False:
+		return render(request, '404error.html')
+
+	group = Group.objects.get(pk=groupId)
+	acount = Acount.objects.get(acount_user=request.user.id)
+
+	data = {
+		'group': group,
+		'acount': acount
+	}
+
+	for admin in group.group_admins.all():
+		if acount == admin:
+			data['admin'] = True
+
+	if request.GET.get('search'):
+		value = request.GET.get('search')
+		search_results = Acount.objects.filter(acount_unicName__icontains=value, acount_private=True).exclude(
+			acount_unicName=acount.acount_unicName
+		)
+
+		peoplesGroup = []
+
+		for result in search_results:
+			partOfGroup = False
+			for user in group.group_users.all():
+				if result == user:
+					partOfGroup = True
+					break
+
+			if partOfGroup == False:
+				peoplesGroup.append(list(Acount.objects.filter(pk=result.id).values())[0])
+
+		return JsonResponse({'search': peoplesGroup})
+
+	return render(request, 'groupMenu.html', data)
