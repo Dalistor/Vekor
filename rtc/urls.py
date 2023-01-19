@@ -16,26 +16,17 @@ Including another URLconf
 from django.conf.urls.static import static
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from chat import views
 from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.view_apresentation, name='apresentation'),
-    path('login/', views.view_login, name='login'),
-    path('logout/', views.view_logout, name='logout'),
-    path('register/', views.view_register, name='register'),
-    path('home/<str:user_name>', views.view_home, name='home'),
+    path('', include('chat.urls')),
     path('saveUserSignal/<int:id>', views.saveUserSignal),
     path('OneSignalSDKWorker.js', TemplateView.as_view(template_name='onesignal/OneSignalSDKWorker.js', content_type='application/x-javascript')),
-    path('perfil/<str:user_name>', views.view_perfil, name='perfil'),
     path('alter/<int:user_id>', views.alter, name='alter'),
-    path('chat/<int:acount_id>/<int:contact_id>', views.view_chat, name='chat'),
-    path('newGroup/', views.view_newGroup, name='newGroup'),
     path('createGroup/', views.createGroup, name='createGroup'),
-    path('group/<int:groupId>', views.view_group, name='group'),
-    path('groupMenu/<int:groupId>', views.view_groupMenu, name='groupMenu'),
     path('alterGroup/<int:groupId>', views.alterGroup, name='alterGroup'),
     path('send/', views.sendMessage, name='send'),
     path('alterMessage/', views.alterMessage, name='alterMessage'),

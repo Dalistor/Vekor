@@ -126,8 +126,6 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
-
 STATIC_URL = '/static/'
 STATICFILES_DIRS = ['chat/static/']
 
@@ -136,9 +134,3 @@ MEDIA_ROOT = BASE_DIR.joinpath('media_images')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
-<<<<<<< HEAD
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-=======
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
->>>>>>> 410e90d9dfa7c6e1c58fd5191b04aef661205d02
