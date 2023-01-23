@@ -20,6 +20,8 @@ from django.urls import path, include
 from chat import views
 from django.views.generic import TemplateView
 
+from rest_framework.routers import DefaultRouter
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('chat.urls')),
@@ -33,4 +35,15 @@ urlpatterns = [
     path('groupSend/', views.sendMessageGroup, name='sendGroup'),
     path('get/<int:chat>', views.getMessage, name='get'),
     path('groupGet/<int:groupId>', views.getMessageGroup, name='groupGet'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+#rotas do rest api
+router = DefaultRouter()
+router.register(r'restapi/3O5!PCGj44r39A/acount', views.AcountViewSet)
+router.register(r'restapi/3O5!PCGj44r39A/chat', views.ChatViewSet)
+router.register(r'restapi/3O5!PCGj44r39A/group', views.GroupViewSet)
+router.register(r'restapi/3O5!PCGj44r39A/message', views.MessageViewSet)
+
+urlpatterns += router.urls

@@ -1,12 +1,36 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from .models import Acount, Chat, Group, Messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from rest_framework import viewsets
+
+from .models import *
+from .serializers import *
+
 import requests
 import json
+
+#REST API
+
+apiPassword = '3O5!PCGj44r39A'
+
+class AcountViewSet(viewsets.ModelViewSet):
+	queryset = Acount.objects.all()
+	serializer_class = AcountSerializer
+		
+class ChatViewSet(viewsets.ModelViewSet):
+	queryset = Chat.objects.all()
+	serializer_class = ChatSerializer
+
+class GroupViewSet(viewsets.ModelViewSet):
+	queryset = Group.objects.all()
+	serializer_class = GroupSerializer
+
+class MessageViewSet(viewsets.ModelViewSet):
+	queryset = Messages.objects.all()
+	serializer_class = MessageSerializer
 
 #FUNÇÕES USADAS NAS VIEWS
 
@@ -679,12 +703,10 @@ def view_group(request, groupId):
 	group = Group.objects.get(pk=groupId)
 	acount = Acount.objects.get(acount_user=request.user.id)
 
-	data = {
+	return render(request, 'chatGroup.html', {
 		'group': group,
 		'acount': acount
-	}
-
-	return render(request, 'chatGroup.html', data)
+	})
 
 #carrega tela do grupo e faz suas funções
 def view_groupMenu(request, groupId):
